@@ -1,15 +1,20 @@
-import pymysql
+import sqlite3
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+DB_FILENAME = "parking.db"
+INIT_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "init_db.sql")
 
 def get_connection():
-    return pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        port=int(os.getenv("DB_PORT", 3306)),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    conn = sqlite3.connect(DB_FILENAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    if not os.path.exists(DB_FILENAME):
+        conn = get_connection()
+        with open(INIT_SCRIPT_PATH, "r", encoding="utf-8") as f:
+            conn.executescript(f.read())
+        conn.commit()
+        conn.close()
+
+init_db()
